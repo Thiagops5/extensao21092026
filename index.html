@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<!-- A tag <html> é a raiz do nosso documento. O atributo lang="pt-BR" avisa aos navegadores e leitores de tela que o idioma principal é o Português do Brasil. dir="ltr" significa que o texto vai da esquerda para a direita (Left-To-Right). -->
+<html lang="pt-BR" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>jogo da cobrinha</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0e1a">
+
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Aqui conectamos nosso arquivo de lógica (JavaScript) que fará a cobrinha se mover. O atributo 'defer' garante que o script só rode depois que todo o HTML for lido. -->
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <!-- A tag <body> é onde a mágica visual acontece! Tudo que o usuário vê e clica fica aqui dentro. -->
+
+    <!-- Criamos uma caixa principal chamada 'wrapper' (embrulho/container) para agrupar tudo e facilitar a centralização do jogo na tela. -->
+    <div class="wrapper">
+        
+        <!-- ============================================== -->
+        <!-- CABEÇALHO DO JOGO                              -->
+        <!-- ============================================== -->
+        <!-- Esta div guarda o logotipo do nosso jogo no topo da tela. -->
+        <div class="game-header">
+            <!-- Um título grande (h1) com o nome do jogo. Usamos uma tag <span> para pintar apenas a palavra "PRO" com uma cor diferente no CSS. -->
+            <h1 class="game-logo">SNAKE<span class="logo-accent">PRO</span></h1>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- PLACAR DE PONTOS (SCOREBOARD)                  -->
+        <!-- ============================================== -->
+        <!-- Aqui nós mostramos a pontuação atual e o recorde do jogador. -->
+        <div class="game-details">
+            
+            <!-- Caixa que mostra a pontuação atual. -->
+            <div class="stat-box">
+                <span class="stat-label">SCORE</span>
+                <!-- O atributo id="score" é muito importante! O JavaScript vai usar esse ID para encontrar este número e atualizá-lo sempre que a cobrinha comer uma maçã. -->
+                <span class="stat-value" id="score">0</span>
+            </div>
+            
+            <!-- Caixa que mostra o maior recorde já alcançado. -->
+            <div class="stat-box">
+                <span class="stat-label">RECORDE</span>
+                <span class="stat-value high-score-value" id="highScore">0</span>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- ÁREA PRINCIPAL DO JOGO                         -->
+        <!-- ============================================== -->
+        <!-- Esta caixa envolve a tela do jogo e todos os menus que aparecem por cima dela (overlays). -->
+        <div class="board-container">
+            
+            <!-- O <canvas> é como se fosse um quadro em branco onde o JavaScript vai desenhar a cobrinha e a comida quadro a quadro. É a tela do nosso jogo! -->
+            <canvas id="gameCanvas"></canvas>
+
+            <!-- Botão de Pausar/Despausar o jogo. Ele usa gráficos vetoriais (SVG) para desenhar os ícones de "Pause" (duas barras) e "Play" (um triângulo). Inicialmente ele fica escondido (classe hidden). -->
+            <button id="pause-btn" class="pause-btn hidden" aria-label="Pausar jogo">
+                <!-- Ícone de pausa (duas barras verticais) -->
+                <svg class="pause-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16" rx="1"/>
+                    <rect x="14" y="4" width="4" height="16" rx="1"/>
+                </svg>
+                <!-- Ícone de play (triângulo). Fica escondido até o jogo ser pausado. -->
+                <svg class="play-icon hidden" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                    <path d="M8 5v14l11-7z"/>
+                </svg>
+            </button>
+
+            <!-- ============================================== -->
+            <!-- TELAS SOBREPOSTAS (OVERLAYS)                   -->
+            <!-- ============================================== -->
+            <!-- Overlays são telas transparentes que aparecem em cima do jogo, como o Menu Inicial, a tela de Pausa e a tela de Game Over. -->
+
+            <!-- 1. TELA DO MENU INICIAL (Ativa por padrão ao carregar) -->
+            <div id="overlay-menu" class="overlay active">
+                <div class="overlay-content">
+                    <h2 class="overlay-title glow-text">SNAKE<span class="logo-accent">PRO</span></h2>
+                    <p class="overlay-subtitle">Jogo da Cobrinha Clássico</p>
+
+                    <!-- Aqui o jogador escolhe o modo de dificuldade do jogo antes de começar. -->
+                    <div class="difficulty-selector">
+                        <span class="diff-section-label">Dificuldade</span>
+                        <div class="diff-options">
+                            <!-- Input do tipo 'radio' permite escolher apenas uma opção por vez. Cada opção tem seu próprio label (rótulo). -->
+                            <input type="radio" id="easy" name="difficulty" value="easy" class="diff-input">
+                            <label for="easy" class="diff-label">Fácil</label>
+
+                            <!-- Esta opção começa pré-selecionada por causa da palavra 'checked' -->
+                            <input type="radio" id="medium" name="difficulty" value="medium" class="diff-input" checked>
+                            <label for="medium" class="diff-label">Médio</label>
+
+                            <input type="radio" id="hard" name="difficulty" value="hard" class="diff-input">
+                            <label for="hard" class="diff-label">Difícil</label>
+                        </div>
+                    </div>
+
+                    <!-- Botão grandão para dar o play no jogo! -->
+                    <button id="start-btn" class="primary-btn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        Jogar
+                    </button>
+
+                    <!-- Dica rápida de como controlar a cobrinha. -->
+                    <p class="controls-hint">Setas · WASD · Toque</p>
+                </div>
+            </div>
+
+            <!-- 2. TELA DE PAUSA -->
+            <!-- Esta tela só aparece se o jogador apertar o botão de pausar. -->
+            <div id="overlay-pause" class="overlay">
+                <div class="overlay-content">
+                    <h2 class="overlay-title">PAUSADO</h2>
+                    <button id="resume-btn" class="primary-btn">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        Continuar
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. TELA DE GAME OVER (FIM DE JOGO) -->
+            <!-- Esta tela é exibida quando a cobrinha bate na parede ou no próprio corpo. -->
+            <div id="overlay-gameover" class="overlay">
+                <div class="overlay-content gameover-content">
+                    <h2 class="overlay-title gameover-title">GAME OVER</h2>
+
+                    <!-- Resumo de como o jogador se saiu nesta partida. -->
+                    <div class="gameover-stats">
+                        <div class="go-stat">
+                            <span class="go-stat-label">Pontuação</span>
+                            <span class="go-stat-value" id="final-score">0</span>
+                        </div>
+                        <div class="go-divider"></div>
+                        <div class="go-stat">
+                            <span class="go-stat-label">Recorde</span>
+                            <span class="go-stat-value" id="final-highscore">0</span>
+                        </div>
+                    </div>
+
+                    <!-- Uma mensagem especial de parabéns caso o jogador bata seu próprio recorde! Inicialmente oculta. -->
+                    <div id="new-record-badge" class="new-record hidden">
+                        ★ Novo Recorde! ★
+                    </div>
+
+                    <!-- Botão para reiniciar a partida. -->
+                    <button id="retry-btn" class="primary-btn">
+                        <!-- Ícone de "recarregar" ou "voltar". -->
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                        </svg>
+                        Jogar Novamente
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- CONTROLES PARA CELULAR (VIRTUAIS)              -->
+        <!-- ============================================== -->
+        <!-- Este conjunto de botões só será útil (e visível dependendo do CSS) quando o usuário jogar em um dispositivo móvel com tela de toque. Cada botão simula uma seta do teclado. -->
+        <div class="controls" id="mobile-controls">
+            
+            <!-- Botão CIMA -->
+            <!-- data-key indica qual tecla do computador este botão está imitando. -->
+            <button data-key="ArrowUp" class="ctrl-btn" aria-label="Mover para cima">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+            </button>
+            
+            <!-- Esta div agrupa os botões de ESQUERDA, BAIXO e DIREITA para ficarem na mesma linha visualmente. -->
+            <div class="controls-row">
+                
+                <!-- Botão ESQUERDA -->
+                <button data-key="ArrowLeft" class="ctrl-btn" aria-label="Mover para esquerda">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                </button>
+                
+                <!-- Botão BAIXO -->
+                <button data-key="ArrowDown" class="ctrl-btn" aria-label="Mover para baixo">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <polyline points="19 12 12 19 5 12"></polyline>
+                    </svg>
+                </button>
+                
+                <!-- Botão DIREITA -->
+                <button data-key="ArrowRight" class="ctrl-btn" aria-label="Mover para direita">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
